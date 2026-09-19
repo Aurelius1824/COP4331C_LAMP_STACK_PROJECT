@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Create an account — Contact Manager</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="masthead">
+  <h1>Contact Manager</h1>
+  <p>Your address book, wherever you are.</p>
+</header>
+
+<main class="card">
+  <div class="card__tab">New account</div>
+
+  <div class="card__body">
+    <p id="message" class="message" role="status" aria-live="polite" hidden></p>
+
+    <form id="signupForm" novalidate>
+      <div class="row">
+        <div class="field">
+          <label for="firstName">First name</label>
+          <input type="text" id="firstName" name="firstName"
+                 autocomplete="given-name" required autofocus>
+        </div>
+
+        <div class="field">
+          <label for="lastName">Last name</label>
+          <input type="text" id="lastName" name="lastName"
+                 autocomplete="family-name" required>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="username">Username</label>
+        <input type="text" id="username" name="username"
+               autocomplete="username" autocapitalize="none"
+               spellcheck="false" required>
+      </div>
+
+      <div class="field">
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password"
+               autocomplete="new-password" required>
+        <span class="hint">At least 8 characters.</span>
+      </div>
+
+      <div class="field">
+        <label for="confirmPassword">Confirm password</label>
+        <input type="password" id="confirmPassword" name="confirmPassword"
+               autocomplete="new-password" required>
+      </div>
+
+      <button type="submit" id="submit" class="btn">Create account</button>
+    </form>
+  </div>
+
+  <div class="card__foot">
+    Already have an account? <a href="index.html">Sign in</a>
+  </div>
+</main>
+
+<script src="js/auth.js"></script>
+</body>
+</html>
