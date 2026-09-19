@@ -1,0 +1,4 @@
+TODO
+1. DATABASe
+2. API
+3. FrontEnd
