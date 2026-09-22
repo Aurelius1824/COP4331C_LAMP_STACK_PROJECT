@@ -1180,11 +1180,7 @@ function getLocalContacts(uId) {
     } catch (e) {}
 
     // Seed some initial demo contacts for demonstration
-    return [
-        { id: 101, firstName: "Alice", lastName: "Smith", emailAddress: "alice.smith@example.com", phoneNumber: "(407) 555-0142", userId: uId },
-        { id: 102, firstName: "Bob", lastName: "Johnson", emailAddress: "bob.j@example.com", phoneNumber: "(407) 555-0189", userId: uId },
-        { id: 103, firstName: "Carol", lastName: "Danvers", emailAddress: "carol.d@example.com", phoneNumber: "(407) 555-0199", userId: uId }
-    ];
+    return [];
 }
 
 function saveLocalContacts(uId, contacts) {
