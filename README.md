@@ -1,7 +1,5 @@
 # COP4331C LAMP Stack Contact Manager -- Group 36
 # Members and Roles
-Team Members	Role
-============  ====
 Ellie Carron	Frontend
 Nirmal Halan	Frontend
 Marco Medrano	Backend/API
