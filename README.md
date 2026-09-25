@@ -1,11 +1,17 @@
 # COP4331C LAMP Stack Contact Manager -- Group 36
 # Members and Roles
 Ellie Carron	Frontend
+
 Nirmal Halan	Frontend
+
 Marco Medrano	Backend/API
+
 Christian Pumarada	Project Manager + Database
+
 Adrian Vincent	Database
 
+
+# Project Overview
 This project is a browser-based contact management application built using the LAMP (Linux, Apache, MySQL, PHP) stack. The application provides a web-based workflow for user registration and authentication, followed by access to a personal contacts management interface. Authenticated users can create, view, search, update, and delete their contacts, while administrative functionality provides additional user and account management capabilities.
 
 The application is organized into three primary components:
