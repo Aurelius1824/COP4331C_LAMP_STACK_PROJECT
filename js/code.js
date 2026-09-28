@@ -366,41 +366,18 @@ async function searchContacts() {
 
     try {
         let contacts = [];
-        let fetchedSuccessfully = false;
 
-        try {
-            const response = await fetch(API_BASE + "/api/search_contact.php", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ userId: userId, search: srch })
-            });
+        const query = "?userId=" + encodeURIComponent(userId) +
+                      "&search=" + encodeURIComponent(srch);
+        const response = await fetch(API_BASE + "/api/search_contact.php" + query);
 
-            if (response.ok) {
-                const data = await response.json();
-                contacts = data.results || data.contacts || [];
-                fetchedSuccessfully = true;
-            }
-        } catch (e) {
-            fetchedSuccessfully = false;
+        if (!response.ok) {
+            const problem = await response.json().catch(() => ({}));
+            throw new Error(problem.error || "Search failed");
         }
 
-        // Fallback: If search_contact endpoint returned empty or failed, use local contacts filtered
-        if (!fetchedSuccessfully) {
-            const storedContacts = getLocalContacts(userId);
-            if (srch) {
-                const q = srch.toLowerCase();
-                contacts = storedContacts.filter(c =>
-                    (c.firstName && c.firstName.toLowerCase().includes(q)) ||
-                    (c.lastName && c.lastName.toLowerCase().includes(q)) ||
-                    (c.emailAddress && c.emailAddress.toLowerCase().includes(q)) ||
-                    (c.phoneNumber && c.phoneNumber.includes(q))
-                );
-            } else {
-                contacts = storedContacts;
-            }
-        } else {
-            saveLocalContacts(userId, contacts);
-        }
+        const data = await response.json();
+        contacts = data.results || [];
 
         currentContacts = contacts;
 
@@ -567,7 +544,6 @@ async function addContact(event) {
                 phoneNumber: cPhone,
                 userId: userId
             };
-            addLocalContact(userId, newContact);
 
             if (fnInput) fnInput.value = "";
             if (lnInput) lnInput.value = "";
@@ -590,7 +566,6 @@ async function addContact(event) {
             phoneNumber: cPhone,
             userId: userId
         };
-        addLocalContact(userId, newContact);
         setFeedback(resultEl, "success", "<i class='bi bi-check-circle-fill me-1'></i> Contact saved!");
         if (fnInput) fnInput.value = "";
         if (lnInput) lnInput.value = "";
@@ -654,15 +629,6 @@ async function saveEditContact() {
         });
 
         if (response.ok) {
-            updateLocalContact(userId, {
-                id: id,
-                firstName: fn,
-                lastName: ln,
-                emailAddress: email,
-                phoneNumber: phone,
-                userId: userId
-            });
-
             const modalEl = document.getElementById("editContactModal");
             if (modalEl) {
                 const modal = bootstrap.Modal.getInstance(modalEl);
@@ -678,14 +644,6 @@ async function saveEditContact() {
         setFeedback(resultEl, "error", data.error || "Failed to update contact.");
 
     } catch (err) {
-        updateLocalContact(userId, {
-            id: id,
-            firstName: fn,
-            lastName: ln,
-            emailAddress: email,
-            phoneNumber: phone,
-            userId: userId
-        });
         const modalEl = document.getElementById("editContactModal");
         if (modalEl) {
             const modal = bootstrap.Modal.getInstance(modalEl);
@@ -721,8 +679,6 @@ async function executeDeleteContact() {
             method: "DELETE"
         });
 
-        deleteLocalContact(userId, contactToDeleteId);
-
         const modalEl = document.getElementById("deleteConfirmModal");
         if (modalEl) {
             const modal = bootstrap.Modal.getInstance(modalEl);
@@ -733,7 +689,6 @@ async function executeDeleteContact() {
         searchContacts();
 
     } catch (err) {
-        deleteLocalContact(userId, contactToDeleteId);
         const modalEl = document.getElementById("deleteConfirmModal");
         if (modalEl) {
             const modal = bootstrap.Modal.getInstance(modalEl);
@@ -770,8 +725,6 @@ async function loadAdminUsers() {
     tableBody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-secondary"><span class="spinner-border spinner-border-sm me-2"></span>Loading users…</td></tr>`;
 
     try {
-        let users = getLocalUsers();
-
         // Ensure default root admin account is present
         if (!users.some(u => u.username.toLowerCase() === "root")) {
             users.unshift({
@@ -783,7 +736,6 @@ async function loadAdminUsers() {
                 isDisabled: 0,
                 dateCreated: "2026-09-01"
             });
-            saveLocalUsers(users);
         }
 
         adminUsersList = users;
@@ -912,7 +864,6 @@ async function toggleUserSuspension(targetUserId, currentDisabledState) {
     if (user) {
         user.isDisabled = newDisabledState;
         user.IsDisabled = newDisabledState;
-        saveLocalUsers(adminUsersList);
         renderAdminUserTable(adminUsersList);
         updateAdminStats(adminUsersList);
     }
@@ -1052,7 +1003,6 @@ async function saveAdminCreateUser() {
             };
 
             adminUsersList.push(newUser);
-            saveLocalUsers(adminUsersList);
             renderAdminUserTable(adminUsersList);
             updateAdminStats(adminUsersList);
 
@@ -1080,7 +1030,6 @@ async function saveAdminCreateUser() {
         };
 
         adminUsersList.push(newUser);
-        saveLocalUsers(adminUsersList);
         renderAdminUserTable(adminUsersList);
         updateAdminStats(adminUsersList);
 
@@ -1098,41 +1047,71 @@ async function saveAdminCreateUser() {
 /**
  * View contacts belonging to a specific user (Admin requirement)
  */
-function viewUserContacts(targetUserId, targetUsername) {
+async function viewUserContacts(targetUserId, targetUsername) {
     const modalUsernameEl = document.getElementById("adminViewContactsUsername");
     const container = document.getElementById("adminViewContactsList");
 
     if (modalUsernameEl) modalUsernameEl.textContent = targetUsername;
-    if (container) {
-        const userContacts = getLocalContacts(targetUserId);
-        if (userContacts.length === 0) {
-            container.innerHTML = `<div class="text-center py-4 text-secondary">This user currently has no contact entries.</div>`;
-        } else {
-            let html = `<ul class="list-group list-group-flush bg-transparent">`;
-            userContacts.forEach(c => {
-                html += `
-                    <li class="list-group-item bg-transparent text-white border-secondary-subtle px-0 py-3">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div>
-                                <h4 class="h6 mb-1 text-white">${escapeHtml(c.firstName)} ${escapeHtml(c.lastName)}</h4>
-                                <div class="small text-secondary"><i class="bi bi-envelope me-1"></i>${escapeHtml(c.emailAddress)}</div>
-                                <div class="small text-secondary"><i class="bi bi-telephone me-1"></i>${escapeHtml(c.phoneNumber)}</div>
-                            </div>
-                            <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle">#${c.id}</span>
-                        </div>
-                    </li>
-                `;
-            });
-            html += `</ul>`;
-            container.innerHTML = html;
-        }
-    }
 
+    // Open the modal right away so the admin sees something while we fetch
     const modalEl = document.getElementById("adminViewContactsModal");
     if (modalEl) {
-        const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
-        modal.show();
+        bootstrap.Modal.getOrCreateInstance(modalEl).show();
     }
+
+    if (!container) return;
+
+    container.innerHTML = `<div class="text-center py-4 text-secondary"><span class="spinner-border spinner-border-sm me-2"></span>Loading contacts…</div>`;
+
+    let userContacts = [];
+
+    try {
+        const response = await fetch(
+            API_BASE + "/api/search_contact.php?userId=" + encodeURIComponent(targetUserId) + "&search="
+        );
+
+        if (!response.ok) {
+            throw new Error("Could not load contacts for this user.");
+        }
+
+        const data = await response.json();
+        userContacts = data.results || [];
+
+    } catch (err) {
+        container.innerHTML = `<div class="text-center py-4 text-danger"><i class="bi bi-exclamation-triangle me-1"></i> ${escapeHtml(err.message)}</div>`;
+        return;
+    }
+
+    if (userContacts.length === 0) {
+        container.innerHTML = `<div class="text-center py-4 text-secondary">This user currently has no contact entries.</div>`;
+        return;
+    }
+
+    let html = `<ul class="list-group list-group-flush bg-transparent">`;
+
+    userContacts.forEach(c => {
+        const cId = c.ID || c.id;
+        const fn = c.FirstName || c.firstName || "";
+        const ln = c.LastName || c.lastName || "";
+        const email = c.EmailAddress || c.emailAddress || "";
+        const phone = c.PhoneNumber || c.phoneNumber || "";
+
+        html += `
+            <li class="list-group-item bg-transparent text-white border-secondary-subtle px-0 py-3">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h4 class="h6 mb-1 text-white">${escapeHtml(fn)} ${escapeHtml(ln)}</h4>
+                        <div class="small text-secondary"><i class="bi bi-envelope me-1"></i>${escapeHtml(email)}</div>
+                        <div class="small text-secondary"><i class="bi bi-telephone me-1"></i>${escapeHtml(phone)}</div>
+                    </div>
+                    <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle">#${cId}</span>
+                </div>
+            </li>
+        `;
+    });
+
+    html += `</ul>`;
+    container.innerHTML = html;
 }
 
 /* ==========================================================================
@@ -1172,60 +1151,5 @@ function escapeHtml(str) {
         .replace(/'/g, "&#039;");
 }
 
-function getLocalContacts(uId) {
-    try {
-        const key = "contacts_user_" + uId;
-        const data = localStorage.getItem(key);
-        if (data) return JSON.parse(data);
-    } catch (e) {}
 
-    // Seed some initial demo contacts for demonstration
-    return [];
-}
-
-function saveLocalContacts(uId, contacts) {
-    try {
-        localStorage.setItem("contacts_user_" + uId, JSON.stringify(contacts));
-    } catch (e) {}
-}
-
-function addLocalContact(uId, contact) {
-    const list = getLocalContacts(uId);
-    list.unshift(contact);
-    saveLocalContacts(uId, list);
-}
-
-function updateLocalContact(uId, updated) {
-    const list = getLocalContacts(uId);
-    const idx = list.findIndex(c => c.id === updated.id);
-    if (idx !== -1) {
-        list[idx] = { ...list[idx], ...updated };
-        saveLocalContacts(uId, list);
-    }
-}
-
-function deleteLocalContact(uId, contactId) {
-    let list = getLocalContacts(uId);
-    list = list.filter(c => c.id !== contactId);
-    saveLocalContacts(uId, list);
-}
-
-function getLocalUsers() {
-    try {
-        const data = localStorage.getItem("admin_users_list");
-        if (data) return JSON.parse(data);
-    } catch (e) {}
-
-    return [
-        { id: 1, firstName: "Application", lastName: "Administrator", username: "root", role: "Admin", isDisabled: 0, dateCreated: "2026-09-01" },
-        { id: 2, firstName: "John", lastName: "Doe", username: "johndoe", role: "User", isDisabled: 0, dateCreated: "2026-09-10" },
-        { id: 3, firstName: "Jane", lastName: "Smith", username: "janesmith", role: "User", isDisabled: 1, dateCreated: "2026-09-12" }
-    ];
-}
-
-function saveLocalUsers(users) {
-    try {
-        localStorage.setItem("admin_users_list", JSON.stringify(users));
-    } catch (e) {}
-}
 
