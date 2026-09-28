@@ -1,6 +1,6 @@
 <?php
 // POST /create_contact.php
-// Body (JSON): { "firstName": "...", "lastName": "...", "emailAddress": "...", "phoneNumber": "...", "userId": 1 }
+// Body (JSON): { "firstName": "...", "lastName": "...", "nickName": "...", "emailAddress": "...", "phoneNumber": "...", "userId": 1 }
 header('Content-Type: application/json');
 
 require_once __DIR__ . '/db.php';
@@ -14,33 +14,53 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 $input = json_decode(file_get_contents('php://input'), true);
 
-$required = ['firstName', 'lastName', 'emailAddress', 'phoneNumber', 'userId'];
-foreach ($required as $field) {
-    if (empty($input[$field]) && $input[$field] !== 0) {
-        http_response_code(400);
-        echo json_encode(['error' => "Missing required field: $field"]);
-        exit;
-    }
+if (!is_array($input)) {
+    http_response_code(400);
+    echo json_encode(['error' => 'Request body must be valid JSON']);
+    exit;
 }
 
-if (!filter_var($input['emailAddress'], FILTER_VALIDATE_EMAIL)) {
+function clean($v) {
+    $v = trim((string) ($v ?? ''));
+    return $v === '' ? null : $v;   // store empty as NULL
+}
+
+$first = clean($input['firstName'] ?? null);
+$last  = clean($input['lastName'] ?? null);
+$nick  = clean($input['nickName'] ?? null);
+$email = clean($input['emailAddress'] ?? null);
+$phone = clean($input['phoneNumber'] ?? null);
+
+if (!isset($input['userId']) || !ctype_digit((string) $input['userId'])) {
+    http_response_code(400);
+    echo json_encode(['error' => 'A valid userId is required']);
+    exit;
+}
+
+if ($first === null && $last === null) {
+    http_response_code(400);
+    echo json_encode(['error' => 'Provide a first name or a last name']);
+    exit;
+}
+
+if ($email === null && $phone === null) {
+    http_response_code(400);
+    echo json_encode(['error' => 'Provide an email address or a phone number']);
+    exit;
+}
+
+if ($email !== null && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
     http_response_code(400);
     echo json_encode(['error' => 'Invalid email address']);
     exit;
 }
 
 try {
-    $newId = createContact(
-        $pdo,
-        $input['firstName'],
-        $input['lastName'],
-        $input['emailAddress'],
-        $input['phoneNumber'],
-        (int) $input['userId']
-    );
+    $newId = createContact($pdo, $first, $last, $nick, $email, $phone, (int) $input['userId']);
     http_response_code(201);
     echo json_encode(['id' => $newId, 'message' => 'Contact created']);
 } catch (PDOException $e) {
+    error_log('createContact failed: ' . $e->getMessage());
     http_response_code(500);
     echo json_encode(['error' => 'Could not create contact']);
 }

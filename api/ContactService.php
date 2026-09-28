@@ -38,23 +38,25 @@ function getContactsByUserId(PDO $pdo, int $userId): array {
  */
 function createContact(
     PDO $pdo,
-    string $firstName,
-    string $lastName,
-    string $emailAddress,
-    string $phoneNumber,
+    ?string $firstName,
+    ?string $lastName,
+    ?string $nickName,
+    ?string $emailAddress,
+    ?string $phoneNumber,
     int $userId
 ): int {
     $stmt = $pdo->prepare(
-        'INSERT INTO Contacts (FirstName, LastName, EmailAddress, PhoneNumber, DateCreated, DateUpdated, UserID)
-         VALUES (:firstName, :lastName, :emailAddress, :phoneNumber, CURDATE(), CURDATE(), :userId)'
-    );
-    $stmt->execute([
-        'firstName'    => $firstName,
-        'lastName'     => $lastName,
-        'emailAddress' => $emailAddress,
-        'phoneNumber'  => $phoneNumber,
-        'userId'       => $userId,
-    ]);
+    'INSERT INTO Contacts (FirstName, LastName, NickName, EmailAddress, PhoneNumber, DateCreated, DateUpdated, UserID)
+     VALUES (:firstName, :lastName, :nickName, :emailAddress, :phoneNumber, CURDATE(), CURDATE(), :userId)'
+);
+$stmt->execute([
+    'firstName'    => $firstName ?? '',
+    'lastName'     => $lastName ?? '',
+    'nickName'     => $nickName ?? '',
+    'emailAddress' => $emailAddress ?? '',
+    'phoneNumber'  => $phoneNumber ?? '',
+    'userId'       => $userId,
+]);
     return (int) $pdo->lastInsertId();
 }
 
@@ -73,6 +75,7 @@ function updateContact(PDO $pdo, int $id, array $fields): bool {
     $columnMap = [
         'firstName'    => 'FirstName',
         'lastName'     => 'LastName',
+        'nickName'     => 'NickName',
         'emailAddress' => 'EmailAddress',
         'phoneNumber'  => 'PhoneNumber',
         'userId'       => 'UserID',

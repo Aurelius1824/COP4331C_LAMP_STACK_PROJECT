@@ -219,3 +219,133 @@ body {
     box-shadow: 0 4px 12px rgba(79, 70, 229, 0.35);
 }
 
+/* Role and Status Badges */
+.badge-role-admin {
+    background: linear-gradient(135deg, #d97706 0%, #b45309 100%) !important;
+    color: #ffffff !important;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    padding: 0.35em 0.75em;
+}
+
+.badge-role-user {
+    background: linear-gradient(135deg, #6366f1 0%, #4338ca 100%) !important;
+    color: #ffffff !important;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    padding: 0.35em 0.75em;
+}
+
+.badge-status-active {
+    background: rgba(16, 185, 129, 0.2) !important;
+    color: #34d399 !important;
+    border: 1px solid rgba(16, 185, 129, 0.4);
+    font-weight: 600;
+}
+
+.badge-status-suspended {
+    background: rgba(239, 68, 68, 0.2) !important;
+    color: #f87171 !important;
+    border: 1px solid rgba(239, 68, 68, 0.4);
+    font-weight: 600;
+}
+
+/* Contact Item Card */
+.contact-item-card {
+    background: rgba(30, 41, 59, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 1rem;
+    transition: all 0.2s ease-in-out;
+}
+
+.contact-item-card:hover {
+    background: rgba(30, 41, 59, 0.95);
+    border-color: rgba(129, 140, 248, 0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
+}
+
+/* Contact Avatar Initials */
+.contact-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--primary-gradient);
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 4px 10px rgba(79, 70, 229, 0.25);
+}
+
+/* Quick Action Buttons */
+.btn-action-icon {
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.5rem;
+    transition: all 0.15s ease-in-out;
+}
+
+.btn-action-icon:hover {
+    transform: scale(1.08);
+}
+
+/* Admin Table Customization */
+.table-dark-custom {
+    --bs-table-bg: transparent;
+    --bs-table-color: var(--text-primary);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+.table-dark-custom th {
+    background-color: rgba(15, 23, 42, 0.9);
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.85rem 1rem;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.15);
+}
+
+.table-dark-custom td {
+    padding: 0.85rem 1rem;
+    vertical-align: middle;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Modal dark enhancements */
+.modal-content.glass-card {
+    background: rgba(15, 23, 42, 0.95) !important;
+    backdrop-filter: blur(20px);
+    box-shadow: 0 25px 60px -10px rgba(0, 0, 0, 0.8) !important;
+}
+
+/* Stat Widget Cards for Admin */
+.stat-card {
+    background: rgba(30, 41, 59, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 1rem;
+    padding: 1.25rem 1.5rem;
+}
+
+.stat-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
+}
+
+.stat-label {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+

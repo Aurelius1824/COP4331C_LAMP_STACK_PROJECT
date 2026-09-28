@@ -28,16 +28,49 @@ if (!is_array($input) || empty($input)) {
     exit;
 }
 
-$allowedFields = ['firstName', 'lastName', 'emailAddress', 'phoneNumber', 'userId'];
+$allowedFields = ['firstName', 'lastName', 'nickName', 'emailAddress', 'phoneNumber', 'userId'];
 $fields = array_intersect_key($input, array_flip($allowedFields));
 
 if (empty($fields)) {
     http_response_code(400);
-    echo json_encode(['error' => 'No valid fields to update. Allowed: ' . implode(', ', $allowedFields)]);
+    echo json_encode(['error' => 'No valid fields to update']);
     exit;
 }
 
-if (isset($fields['emailAddress']) && !filter_var($fields['emailAddress'], FILTER_VALIDATE_EMAIL)) {
+$existing = getContactById($pdo, $id);
+if ($existing === null) {
+    http_response_code(404);
+    echo json_encode(['error' => 'Contact not found']);
+    exit;
+}
+
+// Normalize: trim strings, empty -> null
+foreach (['firstName','lastName','nickName','emailAddress','phoneNumber'] as $f) {
+    if (array_key_exists($f, $fields)) {
+        $fields[$f] = trim((string) ($fields[$f] ?? ''));
+    }
+}
+
+// What the contact will look like after the update
+$merged = [
+    'firstName'    => $existing['FirstName'],
+    'lastName'     => $existing['LastName'],
+    'emailAddress' => $existing['EmailAddress'],
+    'phoneNumber'  => $existing['PhoneNumber'],
+];
+$merged = array_merge($merged, array_intersect_key($fields, $merged));
+
+if (empty($merged['firstName']) && empty($merged['lastName'])) {
+    http_response_code(400);
+    echo json_encode(['error' => 'A contact needs a first name or a last name']);
+    exit;
+}
+if (empty($merged['emailAddress']) && empty($merged['phoneNumber'])) {
+    http_response_code(400);
+    echo json_encode(['error' => 'A contact needs an email address or a phone number']);
+    exit;
+}
+if (!empty($fields['emailAddress']) && !filter_var($fields['emailAddress'], FILTER_VALIDATE_EMAIL)) {
     http_response_code(400);
     echo json_encode(['error' => 'Invalid email address']);
     exit;
