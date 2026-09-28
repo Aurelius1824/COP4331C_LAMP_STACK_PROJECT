@@ -25,7 +25,7 @@ if (strlen($search) > 100) {
     $search = function_exists('mb_substr') ? mb_substr($search, 0, 100) : substr($search, 0, 100);
 }
 
-$columns = 'ID, FirstName, LastName, EmailAddress, PhoneNumber';
+$columns = 'ID, FirstName, LastName, NickName, EmailAddress, PhoneNumber';
 
 try {
     if ($search === '') {
@@ -47,9 +47,10 @@ try {
              WHERE UserID = :uid
                AND (FirstName LIKE :p1
                     OR LastName LIKE :p2
-                    OR CONCAT(FirstName, ' ', LastName) LIKE :p3
+                    OR CONCAT(' ', FirstName, LastName) LIKE :p3
                     OR EmailAddress LIKE :p4
-                    OR PhoneNumber LIKE :p5)
+                    OR PhoneNumber LIKE :p5
+                    OR NickName LIKE :p6)
              ORDER BY LastName, FirstName
              LIMIT 200"
         );
