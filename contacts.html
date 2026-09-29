@@ -14,7 +14,7 @@
     <!-- Custom Styles -->
     <link href="css/styles.css?v=2.4" rel="stylesheet">
     <!-- Core Application Logic -->
-    <script type="text/javascript" src="js/code.js?v=2.4"></script>
+    <script type="text/javascript" src="js/code.js?v=2.5"></script>
     <script type="text/javascript">
         document.addEventListener('DOMContentLoaded', function() {
             readCookie();
@@ -87,11 +87,14 @@
                                                placeholder="Search by name, nickname, email, or phone number…" 
                                                oninput="debouncedSearchContacts();"
                                                onkeyup="if(event.key === 'Enter') searchContacts();" />
+                                        <button type="button" id="voiceButton" class="btn btn-outline-secondary" onclick="startVoiceSearch();" title="Search by voice" aria-label="Search contacts by voice">
+                                            <i class="bi bi-mic"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-outline-secondary" onclick="clearSearch();" title="Clear Search" aria-label="Clear Search">
+                                            <i class="bi bi-x-lg"></i>
+                                        </button>
                                         <button type="button" id="searchContactButton" class="buttons btn btn-primary px-4 fw-semibold" onclick="searchContacts();">
                                             Search
-                                        </button>
-                                        <button type="button" class="btn btn-outline-secondary" onclick="clearSearch();" title="Clear Search">
-                                            <i class="bi bi-x-lg"></i>
                                         </button>
                                     </div>
                                     <div class="mt-3">

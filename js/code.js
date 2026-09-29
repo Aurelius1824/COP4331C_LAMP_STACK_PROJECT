@@ -401,6 +401,8 @@ function clearSearch() {
  * Fills the search box as you speak, then runs the normal search —
  * so results still come from the server, same as typing.
  */
+let activeSpeechRecognition = null;
+
 function startVoiceSearch() {
     const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
     const resultSpan = document.getElementById("contactSearchResult");
@@ -414,7 +416,24 @@ function startVoiceSearch() {
         return;
     }
 
+    if (activeSpeechRecognition) {
+        try {
+            activeSpeechRecognition.abort();
+        } catch (e) {}
+        activeSpeechRecognition = null;
+        if (micButton) {
+            micButton.classList.remove("btn-danger");
+            micButton.classList.add("btn-outline-secondary");
+            micButton.innerHTML = `<i class="bi bi-mic"></i>`;
+        }
+        if (resultSpan) {
+            resultSpan.innerHTML = "";
+        }
+        return;
+    }
+
     const recognition = new SpeechRec();
+    activeSpeechRecognition = recognition;
     recognition.lang = "en-US";
     recognition.continuous = false;
     recognition.interimResults = true;
@@ -446,6 +465,7 @@ function startVoiceSearch() {
     };
 
     recognition.onerror = function (event) {
+        activeSpeechRecognition = null;
         let message = "Voice search failed. Try again.";
         if (event.error === "not-allowed") {
             message = "Microphone access was blocked. Allow it in your browser settings.";
@@ -460,6 +480,7 @@ function startVoiceSearch() {
     };
 
     recognition.onend = function () {
+        activeSpeechRecognition = null;
         if (micButton) {
             micButton.classList.remove("btn-danger");
             micButton.classList.add("btn-outline-secondary");
@@ -467,7 +488,11 @@ function startVoiceSearch() {
         }
     };
 
-    recognition.start();
+    try {
+        recognition.start();
+    } catch (e) {
+        activeSpeechRecognition = null;
+    }
 }
 
 /**
