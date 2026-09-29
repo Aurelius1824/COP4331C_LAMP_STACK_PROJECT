@@ -404,6 +404,80 @@ function clearSearch() {
 }
 
 /**
+ * Voice search using the browser's Web Speech API.
+ * Fills the search box as you speak, then runs the normal search —
+ * so results still come from the server, same as typing.
+ */
+function startVoiceSearch() {
+    const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const resultSpan = document.getElementById("contactSearchResult");
+    const micButton = document.getElementById("voiceButton");
+    const searchInput = document.getElementById("searchText");
+
+    if (!SpeechRec) {
+        if (resultSpan) {
+            resultSpan.innerHTML = `<span class="text-warning-wcag small"><i class="bi bi-mic-mute me-1"></i> Voice search isn't supported in this browser. Try Chrome or Edge.</span>`;
+        }
+        return;
+    }
+
+    const recognition = new SpeechRec();
+    recognition.lang = "en-US";
+    recognition.continuous = false;
+    recognition.interimResults = true;
+
+    recognition.onstart = function () {
+        if (micButton) {
+            micButton.classList.add("btn-danger");
+            micButton.classList.remove("btn-outline-secondary");
+            micButton.innerHTML = `<i class="bi bi-mic-fill"></i>`;
+        }
+        if (resultSpan) {
+            resultSpan.innerHTML = `<span class="text-info-wcag small"><i class="bi bi-soundwave me-1"></i> Listening… say a name</span>`;
+        }
+    };
+
+    recognition.onresult = function (event) {
+        const result = event.results[0];
+        // Speech recognition likes to add a trailing period, which would
+        // break prefix matching ("Medrano." never matches "Medrano")
+        const spoken = result[0].transcript.trim().replace(/[.,!?]+$/, "");
+
+        if (searchInput) searchInput.value = spoken;
+
+        // Interim results fire repeatedly as you talk; only search once,
+        // when the browser says it's done.
+        if (result.isFinal) {
+            searchContacts();
+        }
+    };
+
+    recognition.onerror = function (event) {
+        let message = "Voice search failed. Try again.";
+        if (event.error === "not-allowed") {
+            message = "Microphone access was blocked. Allow it in your browser settings.";
+        } else if (event.error === "no-speech") {
+            message = "I didn't catch that. Try again.";
+        } else if (event.error === "network") {
+            message = "Voice search needs an internet connection.";
+        }
+        if (resultSpan) {
+            resultSpan.innerHTML = `<span class="text-danger-wcag small"><i class="bi bi-exclamation-triangle me-1"></i> ${escapeHtml(message)}</span>`;
+        }
+    };
+
+    recognition.onend = function () {
+        if (micButton) {
+            micButton.classList.remove("btn-danger");
+            micButton.classList.add("btn-outline-secondary");
+            micButton.innerHTML = `<i class="bi bi-mic"></i>`;
+        }
+    };
+
+    recognition.start();
+}
+
+/**
  * Render the contact cards in the DOM
  */
 function renderContactsList(contacts, container) {
