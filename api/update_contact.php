@@ -28,6 +28,14 @@ if (!is_array($input) || empty($input)) {
     exit;
 }
 
+if (!isset($input['nickName'])) {
+    if (isset($input['NickName'])) {
+        $input['nickName'] = $input['NickName'];
+    } elseif (isset($input['nickname'])) {
+        $input['nickName'] = $input['nickname'];
+    }
+}
+
 $allowedFields = ['firstName', 'lastName', 'nickName', 'emailAddress', 'phoneNumber', 'userId'];
 $fields = array_intersect_key($input, array_flip($allowedFields));
 
@@ -55,14 +63,15 @@ foreach (['firstName','lastName','nickName','emailAddress','phoneNumber'] as $f)
 $merged = [
     'firstName'    => $existing['FirstName'],
     'lastName'     => $existing['LastName'],
+    'nickName'     => $existing['NickName'] ?? '',
     'emailAddress' => $existing['EmailAddress'],
     'phoneNumber'  => $existing['PhoneNumber'],
 ];
 $merged = array_merge($merged, array_intersect_key($fields, $merged));
 
-if (empty($merged['firstName']) && empty($merged['lastName'])) {
+if (empty($merged['firstName']) && empty($merged['lastName']) && empty($merged['nickName'])) {
     http_response_code(400);
-    echo json_encode(['error' => 'A contact needs a first name or a last name']);
+    echo json_encode(['error' => 'A contact needs a first name, last name, or nickname']);
     exit;
 }
 if (empty($merged['emailAddress']) && empty($merged['phoneNumber'])) {

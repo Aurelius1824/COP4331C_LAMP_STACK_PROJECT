@@ -1,7 +1,6 @@
 /**
  * Contact Manager — Group 36
  * Core Frontend Application Logic
- * Built upon the COP 4331 LAMP Stack Colors App reference architecture.
  */
 
 // Base API endpoints path (relative URLs for same-origin deployment)
@@ -14,15 +13,13 @@ let lastName = "";
 let username = "";
 let userRole = "User"; // "User" or "Admin"
 
-// Cache for contacts and admin users (helps provide smooth UX and fallback resilience)
+// Cache for contacts and admin users
 let currentContacts = [];
 let adminUsersList = [];
 let selectedAdminUserId = null;
 let contactToDeleteId = null;
 
-/* ==========================================================================
-   Cookie & Session Management (Matching Colors App Reference)
-   ========================================================================== */
+// Cookies
 
 /**
  * Save user session data into both cookies and localStorage
@@ -159,9 +156,7 @@ function doLogout() {
     window.location.href = "index.html";
 }
 
-/* ==========================================================================
-   Authentication: Login & Registration
-   ========================================================================== */
+// Authentication / Login Registration
 
 /**
  * Handles Sign In form submission
@@ -337,9 +332,7 @@ async function doRegister(event) {
     }
 }
 
-/* ==========================================================================
-   Contacts CRUD Operations
-   ========================================================================== */
+// Contacts CRUD Operations
 
 let searchDebounceTimer = null;
 
@@ -499,42 +492,59 @@ function renderContactsList(contacts, container) {
     let html = `<div class="row g-3">`;
 
     contacts.forEach((contact) => {
-        const cId = contact.id || contact.ID;
-        const fn = contact.firstName || contact.FirstName || "";
-        const ln = contact.lastName || contact.LastName || "";
-        const email = contact.emailAddress || contact.EmailAddress || "";
-        const phone = contact.phoneNumber || contact.PhoneNumber || "";
-        const initials = ((fn.charAt(0) || "") + (ln.charAt(0) || "")).toUpperCase() || "?";
+        const cId = contact.id || contact.ID || 0;
+        const fn = contact.firstName || contact.FirstName || contact.firstname || "";
+        const ln = contact.lastName || contact.LastName || contact.lastname || "";
+        const nn = contact.nickName || contact.NickName || contact.nickname || contact.Nickname || "";
+        const email = contact.emailAddress || contact.EmailAddress || contact.email || "";
+        const phone = contact.phoneNumber || contact.PhoneNumber || contact.phone || "";
+        
+        let displayName = "";
+        let subtitle = "";
+        if (fn || ln) {
+            displayName = `${fn} ${ln}`.trim();
+            if (nn) {
+                subtitle = `"${nn}"`;
+            }
+        } else if (nn) {
+            displayName = `"${nn}"`;
+        } else {
+            displayName = "Unnamed Contact";
+        }
 
-        const safeContactJson = escapeHtml(JSON.stringify({
-            id: cId,
-            firstName: fn,
-            lastName: ln,
-            emailAddress: email,
-            phoneNumber: phone
-        }));
+        const initials = ((fn.charAt(0) || "") + (ln.charAt(0) || "") || (nn.charAt(0) || "")).toUpperCase() || "?";
 
         html += `
             <div class="col-12 col-md-6 col-xl-4">
                 <div class="contact-item-card p-3 h-100 d-flex flex-column justify-content-between">
                     <div>
                         <div class="d-flex align-items-center justify-content-between mb-3">
-                            <div class="d-flex align-items-center gap-2">
+                            <div class="d-flex align-items-center gap-2 text-truncate me-2">
                                 <div class="contact-avatar">
                                     ${initials}
                                 </div>
-                                <div>
-                                    <h3 class="h6 fw-bold mb-0 text-white">${escapeHtml(fn)} ${escapeHtml(ln)}</h3>
-                                    <span class="badge bg-secondary-subtle text-secondary small border border-secondary-subtle">ID: #${cId}</span>
+                                <div class="text-truncate">
+                                    <h3 class="h6 fw-bold mb-0 text-white text-truncate">${escapeHtml(displayName)}</h3>
+                                    ${subtitle ? `<div class="contact-card-nickname text-truncate" title="Nickname: ${escapeHtml(nn)}">${escapeHtml(subtitle)}</div>` : ""}
                                 </div>
                             </div>
-                            <div class="d-flex gap-1">
-                                <button type="button" class="btn btn-outline-primary btn-action-icon" onclick='openEditContactModal(${safeContactJson});' title="Edit Contact">
-                                    <i class="bi bi-pencil-fill small"></i>
+                            <div class="dropdown">
+                                <button type="button" class="btn btn-card-overflow" data-bs-toggle="dropdown" aria-expanded="false" title="Contact actions" aria-label="Contact actions">
+                                    <i class="bi bi-three-dots"></i>
                                 </button>
-                                <button type="button" class="btn btn-outline-danger btn-action-icon" onclick="promptDeleteContact(${cId}, '${escapeHtml(fn + " " + ln)}');" title="Delete Contact">
-                                    <i class="bi bi-trash-fill small"></i>
-                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end card-dropdown-menu">
+                                    <li>
+                                        <button type="button" class="dropdown-item" onclick="openEditContactModal(${cId});">
+                                            <i class="bi bi-pencil-fill text-primary"></i> Edit
+                                        </button>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <button type="button" class="dropdown-item dropdown-item-danger" onclick="promptDeleteContact(${cId});">
+                                            <i class="bi bi-trash-fill text-danger"></i> Delete
+                                        </button>
+                                    </li>
+                                </ul>
                             </div>
                         </div>
 
@@ -566,6 +576,7 @@ async function addContact(event) {
 
     const fnInput = document.getElementById("contactFirstName");
     const lnInput = document.getElementById("contactLastName");
+    const nickInput = document.getElementById("contactNickName");
     const emailInput = document.getElementById("contactEmail");
     const phoneInput = document.getElementById("contactPhone");
     const resultEl = document.getElementById("contactAddResult");
@@ -575,11 +586,22 @@ async function addContact(event) {
 
     const cFirstName = fnInput ? fnInput.value.trim() : "";
     const cLastName = lnInput ? lnInput.value.trim() : "";
+    const cNickName = nickInput ? nickInput.value.trim() : "";
     const cEmail = emailInput ? emailInput.value.trim() : "";
     const cPhone = phoneInput ? phoneInput.value.trim() : "";
 
-    if (!cFirstName || !cLastName || !cEmail || !cPhone) {
-        setFeedback(resultEl, "error", "<i class='bi bi-exclamation-triangle-fill me-1'></i> Please complete all contact fields.");
+    if (!cFirstName && !cLastName && !cNickName) {
+        setFeedback(resultEl, "error", "<i class='bi bi-exclamation-triangle-fill me-1'></i> Please provide at least a first name, last name, or nickname.");
+        return;
+    }
+
+    if (!cEmail && !cPhone) {
+        setFeedback(resultEl, "error", "<i class='bi bi-exclamation-triangle-fill me-1'></i> Please provide an email address or a phone number.");
+        return;
+    }
+
+    if (cEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cEmail)) {
+        setFeedback(resultEl, "error", "<i class='bi bi-exclamation-triangle-fill me-1'></i> Please enter a valid email address.");
         return;
     }
 
@@ -589,6 +611,7 @@ async function addContact(event) {
         const payload = {
             firstName: cFirstName,
             lastName: cLastName,
+            nickName: cNickName,
             emailAddress: cEmail,
             phoneNumber: cPhone,
             userId: userId
@@ -610,17 +633,9 @@ async function addContact(event) {
         if (response.status === 201 || response.status === 200) {
             setFeedback(resultEl, "success", "<i class='bi bi-check-circle-fill me-1'></i> Contact successfully added!");
 
-            const newContact = {
-                id: data.id || Date.now(),
-                firstName: cFirstName,
-                lastName: cLastName,
-                emailAddress: cEmail,
-                phoneNumber: cPhone,
-                userId: userId
-            };
-
             if (fnInput) fnInput.value = "";
             if (lnInput) lnInput.value = "";
+            if (nickInput) nickInput.value = "";
             if (emailInput) emailInput.value = "";
             if (phoneInput) phoneInput.value = "";
 
@@ -655,11 +670,16 @@ async function addContact(event) {
  * Open the Edit Contact modal and prefill values
  */
 function openEditContactModal(contact) {
-    document.getElementById("editContactId").value = contact.id;
-    document.getElementById("editFirstName").value = contact.firstName;
-    document.getElementById("editLastName").value = contact.lastName;
-    document.getElementById("editEmail").value = contact.emailAddress;
-    document.getElementById("editPhone").value = contact.phoneNumber;
+    if (typeof contact === "number" || typeof contact === "string") {
+        contact = currentContacts.find(c => (c.id || c.ID) == contact) || {};
+    }
+    const cId = contact.id || contact.ID || "";
+    document.getElementById("editContactId").value = cId;
+    document.getElementById("editFirstName").value = contact.firstName || contact.FirstName || "";
+    document.getElementById("editLastName").value = contact.lastName || contact.LastName || "";
+    document.getElementById("editNickName").value = contact.nickName || contact.NickName || contact.nickname || contact.Nickname || "";
+    document.getElementById("editEmail").value = contact.emailAddress || contact.EmailAddress || "";
+    document.getElementById("editPhone").value = contact.phoneNumber || contact.PhoneNumber || "";
 
     const resultEl = document.getElementById("editContactResult");
     if (resultEl) resultEl.innerHTML = "";
@@ -678,12 +698,21 @@ async function saveEditContact() {
     const id = parseInt(document.getElementById("editContactId").value, 10);
     const fn = document.getElementById("editFirstName").value.trim();
     const ln = document.getElementById("editLastName").value.trim();
+    const nn = document.getElementById("editNickName").value.trim();
     const email = document.getElementById("editEmail").value.trim();
     const phone = document.getElementById("editPhone").value.trim();
     const resultEl = document.getElementById("editContactResult");
 
-    if (!fn || !ln || !email || !phone) {
-        setFeedback(resultEl, "error", "Please fill in all fields.");
+    if (!fn && !ln && !nn) {
+        setFeedback(resultEl, "error", "Please provide at least a first name, last name, or nickname.");
+        return;
+    }
+    if (!email && !phone) {
+        setFeedback(resultEl, "error", "Please provide an email address or a phone number.");
+        return;
+    }
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        setFeedback(resultEl, "error", "Invalid email address format.");
         return;
     }
 
@@ -691,6 +720,7 @@ async function saveEditContact() {
         const payload = {
             firstName: fn,
             lastName: ln,
+            nickName: nn,
             emailAddress: email,
             phoneNumber: phone,
             userId: userId
@@ -732,8 +762,17 @@ async function saveEditContact() {
  */
 function promptDeleteContact(id, name) {
     contactToDeleteId = id;
+    if (!name) {
+        const contact = currentContacts.find(c => (c.id || c.ID) == id);
+        if (contact) {
+            const fn = contact.firstName || contact.FirstName || "";
+            const ln = contact.lastName || contact.LastName || "";
+            const nn = contact.nickName || contact.NickName || contact.nickname || contact.Nickname || "";
+            name = (fn + " " + ln).trim() || nn || "this contact";
+        }
+    }
     const nameEl = document.getElementById("deleteContactName");
-    if (nameEl) nameEl.textContent = name;
+    if (nameEl) nameEl.textContent = name || "this contact";
 
     const modalEl = document.getElementById("deleteConfirmModal");
     if (modalEl) {
@@ -1167,14 +1206,24 @@ async function viewUserContacts(targetUserId, targetUsername) {
         const cId = c.ID || c.id;
         const fn = c.FirstName || c.firstName || "";
         const ln = c.LastName || c.lastName || "";
+        const nn = c.NickName || c.nickName || c.nickname || "";
         const email = c.EmailAddress || c.emailAddress || "";
         const phone = c.PhoneNumber || c.phoneNumber || "";
+        
+        let displayName = "";
+        if (fn || ln) {
+            displayName = `${fn} ${ln}`.trim() + (nn ? ` ("${nn}")` : "");
+        } else if (nn) {
+            displayName = `"${nn}"`;
+        } else {
+            displayName = "Unnamed Contact";
+        }
 
         html += `
             <li class="list-group-item bg-transparent text-white border-secondary-subtle px-0 py-3">
                 <div class="d-flex justify-content-between align-items-start">
                     <div>
-                        <h4 class="h6 mb-1 text-white">${escapeHtml(fn)} ${escapeHtml(ln)}</h4>
+                        <h4 class="h6 mb-1 text-white">${escapeHtml(displayName)}</h4>
                         <div class="small text-secondary"><i class="bi bi-envelope me-1"></i>${escapeHtml(email)}</div>
                         <div class="small text-secondary"><i class="bi bi-telephone me-1"></i>${escapeHtml(phone)}</div>
                     </div>

@@ -27,7 +27,7 @@ function clean($v) {
 
 $first = clean($input['firstName'] ?? null);
 $last  = clean($input['lastName'] ?? null);
-$nick  = clean($input['nickName'] ?? null);
+$nick  = clean($input['nickName'] ?? $input['NickName'] ?? $input['nickname'] ?? null);
 $email = clean($input['emailAddress'] ?? null);
 $phone = clean($input['phoneNumber'] ?? null);
 
@@ -37,9 +37,9 @@ if (!isset($input['userId']) || !ctype_digit((string) $input['userId'])) {
     exit;
 }
 
-if ($first === null && $last === null) {
+if ($first === null && $last === null && $nick === null) {
     http_response_code(400);
-    echo json_encode(['error' => 'Provide a first name or a last name']);
+    echo json_encode(['error' => 'Provide a first name, a last name, or a nickname']);
     exit;
 }
 

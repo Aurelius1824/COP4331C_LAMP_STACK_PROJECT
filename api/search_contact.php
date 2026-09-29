@@ -47,7 +47,7 @@ try {
              WHERE UserID = :uid
                AND (FirstName LIKE :p1
                     OR LastName LIKE :p2
-                    OR CONCAT(' ', FirstName, LastName) LIKE :p3
+                    OR CONCAT_WS(' ', FirstName, LastName) LIKE :p3
                     OR EmailAddress LIKE :p4
                     OR PhoneNumber LIKE :p5
                     OR NickName LIKE :p6)
@@ -61,6 +61,7 @@ try {
             'p3'  => $prefix,
             'p4'  => $prefix,
             'p5'  => $prefix,
+            'p6'  => $prefix,
         ]);
     }
 

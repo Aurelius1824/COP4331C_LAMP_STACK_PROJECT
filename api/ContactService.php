@@ -9,7 +9,7 @@ require_once __DIR__ . '/db.php';
  */
 function getContactById(PDO $pdo, int $id): ?array {
     $stmt = $pdo->prepare(
-        'SELECT ID, FirstName, LastName, EmailAddress, PhoneNumber, DateCreated, DateUpdated, UserID
+        'SELECT ID, FirstName, LastName, NickName, EmailAddress, PhoneNumber, DateCreated, DateUpdated, UserID
          FROM Contacts
          WHERE ID = :id'
     );
@@ -24,7 +24,7 @@ function getContactById(PDO $pdo, int $id): ?array {
  */
 function getContactsByUserId(PDO $pdo, int $userId): array {
     $stmt = $pdo->prepare(
-        'SELECT ID, FirstName, LastName, EmailAddress, PhoneNumber, DateCreated, DateUpdated, UserID
+        'SELECT ID, FirstName, LastName, NickName, EmailAddress, PhoneNumber, DateCreated, DateUpdated, UserID
          FROM Contacts
          WHERE UserID = :userId'
     );
